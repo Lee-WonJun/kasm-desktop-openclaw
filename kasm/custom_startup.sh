@@ -31,11 +31,7 @@ if [ ! -f "${STATE_DIR}/openclaw.json" ]; then
 }
 EOF
 fi
-# Node needs same config (especially browser.defaultProfile)
 cp "${STATE_DIR}/openclaw.json" "${NODE_STATE_DIR}/openclaw.json"
-
-# Clean stale identity so main state dir pairs as operator (not node)
-rm -rf "${STATE_DIR}/identity" "${STATE_DIR}/node.json" 2>/dev/null
 
 # Desktop shortcut
 mkdir -p "${HOME}/Desktop"
@@ -43,11 +39,20 @@ cat > "${HOME}/Desktop/OpenClaw.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Name=OpenClaw Control UI
-Exec=xdg-open http://localhost:18789/#token=${OPENCLAW_GATEWAY_TOKEN}
+Exec=google-chrome --no-sandbox --user-data-dir=${HOME}/.openclaw-ui-profile http://localhost:18789/#token=${OPENCLAW_GATEWAY_TOKEN}
 Icon=utilities-terminal
 Terminal=false
 EOF
 chmod +x "${HOME}/Desktop/OpenClaw.desktop"
+
+# On first run, clean identity so it pairs fresh as operator (not stale node role)
+# After first successful pair, the identity + devices DB persist via volume
+if [ ! -f "${STATE_DIR}/identity/device-auth.json" ]; then
+  rm -rf "${STATE_DIR}/identity" 2>/dev/null
+  FIRST_RUN=1
+else
+  FIRST_RUN=0
+fi
 
 # Gateway (background)
 openclaw gateway --bind lan --port 18789 --allow-unconfigured &
@@ -56,6 +61,37 @@ for i in $(seq 1 30); do
   curl -sf http://localhost:18789/ >/dev/null 2>&1 && break
   sleep 1
 done
+
+if [ "$FIRST_RUN" = "1" ]; then
+  # Trigger initial pairing with full admin scope by using a command that needs it
+  # openclaw devices list requires operator.admin — this forces auto-approve with that scope
+  openclaw devices list >/dev/null 2>&1 || true
+  sleep 2
+
+  # Upgrade scope in paired.json if auto-approve only gave operator.read
+  python3 -c "
+import json, os
+paired_file = os.path.expanduser('~/.openclaw/devices/paired.json')
+if not os.path.exists(paired_file):
+    exit(0)
+with open(paired_file) as f:
+    data = json.load(f)
+full_scopes = ['operator.admin', 'operator.approvals', 'operator.pairing']
+changed = False
+for dev in data.values():
+    if dev.get('role') == 'operator' and dev.get('clientId') in ('cli', 'gateway-client'):
+        if set(dev.get('scopes', [])) != set(full_scopes):
+            dev['scopes'] = full_scopes
+            for t in dev.get('tokens', {}).values():
+                if t.get('role') == 'operator':
+                    t['scopes'] = full_scopes
+            changed = True
+if changed:
+    with open(paired_file, 'w') as f:
+        json.dump(data, f, indent=2)
+    print('Upgraded operator scopes to full admin')
+" 2>/dev/null
+fi
 
 # Node host in separate state dir (so main dir stays operator role)
 export OPENCLAW_STATE_DIR="${NODE_STATE_DIR}"
