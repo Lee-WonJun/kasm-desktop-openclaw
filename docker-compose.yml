@@ -11,9 +11,6 @@ services:
     ports:
       - "6901:6901"
       - "18789:18789"
-    volumes:
-      - openclaw_data:/home/kasm-user/.openclaw
-      - openclaw_workspace:/home/kasm-user/openclaw-workspace
     shm_size: "2gb"
     deploy:
       resources:
@@ -21,7 +18,3 @@ services:
           cpus: "4"
           memory: 4g
     restart: unless-stopped
-
-volumes:
-  openclaw_data:
-  openclaw_workspace:
