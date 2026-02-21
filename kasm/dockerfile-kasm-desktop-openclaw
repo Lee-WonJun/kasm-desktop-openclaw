@@ -1,0 +1,21 @@
+FROM kasmweb/desktop:1.18.0
+
+USER root
+ENV HOME=/home/kasm-default-profile
+ENV STARTUPDIR=/dockerstartup
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl ca-certificates git && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://openclaw.ai/install.sh | bash -s -- --no-onboard
+
+COPY custom_startup.sh /dockerstartup/custom_startup.sh
+RUN chmod +x /dockerstartup/custom_startup.sh
+
+RUN chown 1000:0 $HOME && $STARTUPDIR/set_user_permission.sh $HOME
+
+ENV HOME=/home/kasm-user
+WORKDIR $HOME
+RUN mkdir -p $HOME/.openclaw $HOME/openclaw-workspace && chown -R 1000:0 $HOME
+USER 1000
