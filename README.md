@@ -1,3 +1,6 @@
+<img width="948" height="989" alt="image" src="https://github.com/user-attachments/assets/7500db84-f798-4b64-bf6d-b511dcce058a" />
+
+
 # kasm-desktop-openclaw
 
 Single-container setup running [OpenClaw](https://openclaw.ai) Gateway + Node Host inside [Kasm Desktop](https://kasmweb.com), providing a browser-accessible virtual desktop where an AI agent can control the environment — execute commands, browse the web, and manage files.
