@@ -10,7 +10,6 @@ services:
       OPENCLAW_MODEL: ${OPENCLAW_MODEL:-groq/meta-llama/llama-4-scout-17b-16e-instruct}
     ports:
       - "6901:6901"
-      - "18789:18789"
     shm_size: "2gb"
     deploy:
       resources:
