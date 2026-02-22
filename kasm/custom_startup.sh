@@ -11,26 +11,11 @@ mkdir -p "${STATE_DIR}" "${NODE_STATE_DIR}" "${HOME}/openclaw-workspace"
 if [ ! -f "${STATE_DIR}/.env" ]; then
   cat > "${STATE_DIR}/.env" <<EOF
 OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN:?required}
-GROQ_API_KEY=${GROQ_API_KEY:-}
 EOF
 fi
 cp "${STATE_DIR}/.env" "${NODE_STATE_DIR}/.env"
 
-# Config (only on first run — volume persists it)
-if [ ! -f "${STATE_DIR}/openclaw.json" ]; then
-  cat > "${STATE_DIR}/openclaw.json" <<EOF
-{
-  "gateway": { "mode": "local" },
-  "agents": {
-    "defaults": {
-      "model": { "primary": "${OPENCLAW_MODEL:-groq/meta-llama/llama-4-scout-17b-16e-instruct}" },
-      "workspace": "/home/kasm-user/openclaw-workspace"
-    }
-  },
-  "browser": { "enabled": true, "headless": false, "defaultProfile": "openclaw" }
-}
-EOF
-fi
+# Config is baked into image via Dockerfile COPY
 cp "${STATE_DIR}/openclaw.json" "${NODE_STATE_DIR}/openclaw.json"
 
 # Desktop shortcut

@@ -33,7 +33,10 @@ For example:
 
 ```bash
 cp .env.example .env
-# Edit .env — set OPENCLAW_GATEWAY_TOKEN and GROQ_API_KEY
+# Edit .env — set OPENCLAW_GATEWAY_TOKEN
+
+cp openclaw.json.example openclaw.json
+# Edit openclaw.json — set API keys, model, and other OpenClaw options
 
 docker compose up -d --build
 ```
@@ -44,12 +47,18 @@ Access:
 
 ## Configuration
 
-All configuration is via `.env`:
+### `.env` (Docker-level)
 
 | Variable | Description | Default |
 |---|---|---|
 | `OPENCLAW_GATEWAY_TOKEN` | Auth token for gateway API | (required) |
 | `VNC_PW` | Kasm Desktop VNC password | `password` |
+
+### `openclaw.json` (Agent config)
+
+OpenClaw configuration is managed via `openclaw.json` in the project root, which is mounted into the container. Edit this file directly on the host — changes take effect on container restart.
+
+See the [OpenClaw Configuration Reference](https://molty.finna.ai/docs/gateway/configuration-reference) for all available options
 
 ## Usage
 
@@ -69,6 +78,7 @@ All configuration is via `.env`:
 ```
 .
 ├── .env.example          # Template
+├── openclaw.json.example # Template
 ├── docker-compose.yml
 └── kasm/
     ├── custom_startup.sh

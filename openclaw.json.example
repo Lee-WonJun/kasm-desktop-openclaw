@@ -1,0 +1,13 @@
+{
+  "env": {
+    "GROQ_API_KEY": "your-groq-api-key-here"
+  },
+  "gateway": { "mode": "local" },
+  "agents": {
+    "defaults": {
+      "model": { "primary": "groq/meta-llama/llama-4-scout-17b-16e-instruct" },
+      "workspace": "/home/kasm-user/openclaw-workspace"
+    }
+  },
+  "browser": { "enabled": true, "headless": false, "defaultProfile": "openclaw" }
+}
