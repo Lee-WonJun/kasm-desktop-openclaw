@@ -6,8 +6,13 @@ services:
     environment:
       VNC_PW: ${VNC_PW}
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+      OPENCLAW_BIND: ${OPENCLAW_BIND:-lan}
     ports:
       - "6901:6901"
+      # Uncomment to access Control UI from host (requires OPENCLAW_BIND=lan)
+      # - "18789:18789"
+    volumes:
+      - ./openclaw.json:/home/kasm-user/.openclaw/openclaw.json:ro
     shm_size: "2gb"
     deploy:
       resources:

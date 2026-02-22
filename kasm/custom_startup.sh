@@ -3,9 +3,8 @@ set -uo pipefail
 
 export HOME=/home/kasm-user
 STATE_DIR="${HOME}/.openclaw"
-NODE_STATE_DIR="${HOME}/.openclaw-node"
 
-mkdir -p "${STATE_DIR}" "${NODE_STATE_DIR}" "${HOME}/openclaw-workspace"
+mkdir -p "${STATE_DIR}" "${HOME}/openclaw-workspace"
 
 # Gateway token via state .env (auto-read by all openclaw commands)
 if [ ! -f "${STATE_DIR}/.env" ]; then
@@ -13,10 +12,6 @@ if [ ! -f "${STATE_DIR}/.env" ]; then
 OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN:?required}
 EOF
 fi
-cp "${STATE_DIR}/.env" "${NODE_STATE_DIR}/.env"
-
-# Config is baked into image via Dockerfile COPY
-cp "${STATE_DIR}/openclaw.json" "${NODE_STATE_DIR}/openclaw.json"
 
 # Desktop shortcut
 mkdir -p "${HOME}/Desktop"
@@ -30,31 +25,35 @@ Terminal=false
 EOF
 chmod +x "${HOME}/Desktop/OpenClaw.desktop"
 
-# On first run, clean identity so it pairs fresh as operator (not stale node role)
-# After first successful pair, the identity + devices DB persist via volume
-if [ ! -f "${STATE_DIR}/identity/device-auth.json" ]; then
-  rm -rf "${STATE_DIR}/identity" 2>/dev/null
-  FIRST_RUN=1
-else
-  FIRST_RUN=0
-fi
+BIND_MODE="${OPENCLAW_BIND:-loopback}"
 
-# Gateway (background)
-openclaw gateway --bind lan --port 18789 --allow-unconfigured &
+if [ "$BIND_MODE" = "lan" ]; then
+  # lan mode: need separate state dir for node (role conflict) + scope upgrade
+  NODE_STATE_DIR="${HOME}/.openclaw-node"
+  mkdir -p "${NODE_STATE_DIR}"
+  cp "${STATE_DIR}/.env" "${NODE_STATE_DIR}/.env"
+  cp "${STATE_DIR}/openclaw.json" "${NODE_STATE_DIR}/openclaw.json"
 
-for i in $(seq 1 30); do
-  curl -sf http://localhost:18789/ >/dev/null 2>&1 && break
-  sleep 1
-done
+  # Clean identity on first run so it pairs fresh as operator
+  if [ ! -f "${STATE_DIR}/identity/device-auth.json" ]; then
+    rm -rf "${STATE_DIR}/identity" 2>/dev/null
+    FIRST_RUN=1
+  else
+    FIRST_RUN=0
+  fi
 
-if [ "$FIRST_RUN" = "1" ]; then
-  # Trigger initial pairing with full admin scope by using a command that needs it
-  # openclaw devices list requires operator.admin — this forces auto-approve with that scope
-  openclaw devices list >/dev/null 2>&1 || true
-  sleep 2
+  openclaw gateway --bind lan --port 18789 --allow-unconfigured &
 
-  # Upgrade scope in paired.json if auto-approve only gave operator.read
-  python3 -c "
+  for i in $(seq 1 30); do
+    curl -sf http://localhost:18789/ >/dev/null 2>&1 && break
+    sleep 1
+  done
+
+  if [ "$FIRST_RUN" = "1" ]; then
+    openclaw devices list >/dev/null 2>&1 || true
+    sleep 2
+    # Upgrade scope in paired.json if auto-approve only gave operator.read
+    python3 -c "
 import json, os
 paired_file = os.path.expanduser('~/.openclaw/devices/paired.json')
 if not os.path.exists(paired_file):
@@ -76,10 +75,26 @@ if changed:
         json.dump(data, f, indent=2)
     print('Upgraded operator scopes to full admin')
 " 2>/dev/null
+  fi
+
+  export OPENCLAW_STATE_DIR="${NODE_STATE_DIR}"
+else
+  # loopback mode: separate state dir for node (same role conflict as lan)
+  NODE_STATE_DIR="${HOME}/.openclaw-node"
+  mkdir -p "${NODE_STATE_DIR}"
+  cp "${STATE_DIR}/.env" "${NODE_STATE_DIR}/.env"
+  cp "${STATE_DIR}/openclaw.json" "${NODE_STATE_DIR}/openclaw.json"
+
+  openclaw gateway --port 18789 --allow-unconfigured &
+
+  for i in $(seq 1 30); do
+    curl -sf http://localhost:18789/ >/dev/null 2>&1 && break
+    sleep 1
+  done
+
+  export OPENCLAW_STATE_DIR="${NODE_STATE_DIR}"
 fi
 
-# Node host in separate state dir (so main dir stays operator role)
-export OPENCLAW_STATE_DIR="${NODE_STATE_DIR}"
 while true; do
   openclaw node run --host 127.0.0.1 --port 18789 --display-name "Local Node" || true
   sleep 5

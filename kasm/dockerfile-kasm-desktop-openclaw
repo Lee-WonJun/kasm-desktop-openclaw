@@ -19,6 +19,4 @@ ENV HOME=/home/kasm-user
 WORKDIR $HOME
 RUN mkdir -p $HOME/.openclaw $HOME/openclaw-workspace && chown -R 1000:0 $HOME
 
-COPY openclaw.json $HOME/.openclaw/openclaw.json
-RUN chown 1000:0 $HOME/.openclaw/openclaw.json
 USER 1000

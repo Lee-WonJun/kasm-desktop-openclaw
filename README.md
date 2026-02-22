@@ -46,7 +46,7 @@ docker compose up -d --build
 
 Access:
 - **Kasm Desktop**: https://localhost:6901 (user: `kasm_user`, password: value of `VNC_PW`)
-- **Control UI**: http://localhost:18789/#token=YOUR_TOKEN
+- **Control UI**: Open the desktop shortcut inside Kasm, or http://localhost:18789/#token=YOUR_TOKEN if using `OPENCLAW_BIND=lan`
 
 ## Configuration
 
@@ -56,6 +56,7 @@ Access:
 |---|---|---|
 | `OPENCLAW_GATEWAY_TOKEN` | Auth token for gateway API | (required) |
 | `VNC_PW` | Kasm Desktop VNC password | `password` |
+| `OPENCLAW_BIND` | Gateway bind: `loopback` (container-only) or `lan` (expose to host) | `loopback` |
 
 ### `openclaw.json` (Agent config)
 
