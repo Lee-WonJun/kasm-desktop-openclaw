@@ -20,7 +20,6 @@ Single-container setup running [OpenClaw](https://openclaw.ai) Gateway + Node Ho
 
 Everything runs in one container based on `kasmweb/desktop:1.18.0`:
 
-For example:
 ```
 ┌─────────────────────────────────────────────┐
 │  Docker Container                           │
@@ -36,33 +35,27 @@ For example:
 
 ```bash
 cp .env.example .env
-# Edit .env — set OPENCLAW_GATEWAY_TOKEN
-
-cp openclaw.json.example openclaw.json
-# Edit openclaw.json — set API keys, model, and other OpenClaw options
+# Edit .env — set OPENCLAW_GATEWAY_TOKEN and GROQ_API_KEY
 
 docker compose up -d --build
 ```
 
 Access:
 - **Kasm Desktop**: https://localhost:6901 (user: `kasm_user`, password: value of `VNC_PW`)
-- **Control UI**: Open the desktop shortcut inside Kasm, or http://localhost:18789/#token=YOUR_TOKEN if using `OPENCLAW_BIND=lan`
+- **Control UI**: Open the desktop shortcut inside Kasm, or http://localhost:18789/#token=YOUR_TOKEN
 
 ## Configuration
 
-### `.env` (Docker-level)
+### `.env`
 
 | Variable | Description | Default |
 |---|---|---|
 | `OPENCLAW_GATEWAY_TOKEN` | Auth token for gateway API | (required) |
 | `VNC_PW` | Kasm Desktop VNC password | `password` |
-| `OPENCLAW_BIND` | Gateway bind: `loopback` (container-only) or `lan` (expose to host) | `loopback` |
+| `GROQ_API_KEY` | Groq API key | (required) |
+| `OPENCLAW_MODEL` | Model to use | `groq/meta-llama/llama-4-scout-17b-16e-instruct` |
 
-### `openclaw.json` (Agent config)
-
-OpenClaw configuration is managed via `openclaw.json` in the project root, which is mounted into the container. Edit this file directly on the host — changes take effect on container restart.
-
-See the [OpenClaw Configuration Reference](https://molty.finna.ai/docs/gateway/configuration-reference) for all available options
+OpenClaw configuration (`openclaw.json`) is auto-generated on first run from the environment variables above and persisted via Docker volume. To reconfigure, either delete the `openclaw_data` volume and restart, or edit the config directly inside the container at `~/.openclaw/openclaw.json`.
 
 ## Usage
 
@@ -81,8 +74,8 @@ See the [OpenClaw Configuration Reference](https://molty.finna.ai/docs/gateway/c
 
 ```
 .
-├── .env.example          # Template
-├── openclaw.json.example # Template
+├── .env.example          # Template for environment variables
+├── openclaw.json.example # Reference for OpenClaw config format
 ├── docker-compose.yml
 └── kasm/
     ├── custom_startup.sh

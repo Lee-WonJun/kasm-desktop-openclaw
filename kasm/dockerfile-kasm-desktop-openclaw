@@ -10,7 +10,7 @@ RUN apt-get update && \
 
 RUN curl -fsSL https://openclaw.ai/install.sh | bash -s -- --no-onboard
 
-COPY kasm/custom_startup.sh /dockerstartup/custom_startup.sh
+COPY custom_startup.sh /dockerstartup/custom_startup.sh
 RUN chmod +x /dockerstartup/custom_startup.sh
 
 RUN chown 1000:0 $HOME && $STARTUPDIR/set_user_permission.sh $HOME
@@ -18,5 +18,4 @@ RUN chown 1000:0 $HOME && $STARTUPDIR/set_user_permission.sh $HOME
 ENV HOME=/home/kasm-user
 WORKDIR $HOME
 RUN mkdir -p $HOME/.openclaw $HOME/openclaw-workspace && chown -R 1000:0 $HOME
-
 USER 1000
