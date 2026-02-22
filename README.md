@@ -1,4 +1,5 @@
-<img width="948" height="989" alt="image" src="https://github.com/user-attachments/assets/7500db84-f798-4b64-bf6d-b511dcce058a" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/8e564aa9-e265-465c-adda-ec55d76de622" />
+
 
 
 # kasm-desktop-openclaw
